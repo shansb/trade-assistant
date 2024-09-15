@@ -9,6 +9,7 @@ let currentCode = 'SZ000001';
 let isFundMode = false;
 let currentSeries = null; // 添加这行来跟踪当前的图表系列
 let currentLineSeries = null; // 添加这行来跟踪当前的直线系列
+let currentMarkers = null; // 添加这行来跟踪当前的标记
 
 // 在文件顶部添加防抖函数
 function debounce(func, wait) {
@@ -101,6 +102,9 @@ async function updateChart() {
         return;
     }
 
+    // 保存当前的可见范围
+    const currentVisibleRange = chart.timeScale().getVisibleRange();
+
     // 只有当 currentSeries 存在时才移除
     if (currentSeries) {
         chart.removeSeries(currentSeries);
@@ -127,10 +131,13 @@ async function updateChart() {
     await fetchData(currentSeries);
     console.log('Fetched data, now drawing kline');
     
-    // 等待一小段时间，确保图表已经完全加载
-    setTimeout(() => {
-        drawKlineLine();
-    }, 100);
+    // 立即绘制 K 线
+    await drawKlineLine();
+    
+    // 恢复之前的可见范围
+    if (currentVisibleRange) {
+        chart.timeScale().setVisibleRange(currentVisibleRange);
+    }
 }
 
 async function fetchData(candleSeries) {
@@ -162,17 +169,13 @@ async function drawKlineLine() {
         if (klineData && klineData.point1 && klineData.date1 && klineData.point2 && klineData.date2) {
             const { point1, date1, point2, date2 } = klineData;
             
-            // 移除旧的线系列（如果存在）
+            // 移除旧的线系列和标记（如果存在）
             if (currentLineSeries) {
                 chart.removeSeries(currentLineSeries);
             }
-
-            // 创建新的线系列
-            currentLineSeries = chart.addLineSeries({
-                color: 'rgba(255, 0, 0, 0.8)',
-                lineWidth: 2,
-                lineStyle: LightweightCharts.LineStyle.Solid,
-            });
+            if (currentMarkers) {
+                currentSeries.setMarkers([]);
+            }
 
             // 将日期转换为时间戳
             const time1 = convertToTimestamp(date1);
@@ -183,52 +186,73 @@ async function drawKlineLine() {
                 throw new Error('Invalid date input');
             }
 
-            // 计算直线斜率和截距
-            const slope = (parseFloat(point2) - parseFloat(point1)) / (time2 - time1);
-            const intercept = parseFloat(point1) - slope * time1;
-            console.log('Slope and intercept:', slope, intercept);
+            // 获取所有数据点
+            const allData = currentSeries.data();
 
-            // 获取图表的整个时间范围
-            const timeRange = chart.timeScale().getVisibleRange();
-            console.log('Time range:', timeRange);
-            if (timeRange && timeRange.from && timeRange.to) {
-                // 使用图表的整个时间范围来创建直线数据点
-                const fromTimestamp = convertToTimestamp(timeRange.from);
-                const toTimestamp = convertToTimestamp(timeRange.to);
-                
-                if (fromTimestamp === null || toTimestamp === null) {
-                    throw new Error('Invalid time range');
-                }
+            // 查找对应的索引
+            const index1 = allData.findIndex(d => convertDateObjectToTimestamp(d.time) === time1);
+            const index2 = allData.findIndex(d => convertDateObjectToTimestamp(d.time) === time2);
 
-                const lineData = [
-                    { time: fromTimestamp, value: slope * fromTimestamp + intercept },
-                    { time: toTimestamp, value: slope * toTimestamp + intercept }
-                ];
-
-                console.log('Line data:', lineData);
-
-                // 设置直线数据
-                currentLineSeries.setData(lineData);
-            } else {
-                console.error('Unable to get valid time range');
+            // 检查是否找到了对应的日期
+            if (index1 === -1 || index2 === -1) {
+                alert(`无法在当前数据中找到 Kline 的日期。\n日期1: ${date1}\n日期2: ${date2}`);
+                return; // 提前退出函数，不绘制直线
             }
 
-            // 确保直线可见
-            chart.timeScale().fitContent();
+            // 创建新的线系列
+            currentLineSeries = chart.addLineSeries({
+                color: 'rgba(255, 0, 0, 0.8)',
+                lineWidth: 2,
+                lineStyle: LightweightCharts.LineStyle.Solid,
+            });
+
+            // 计算直线斜率和截距
+            const slope = (parseFloat(point2) - parseFloat(point1)) / (index2 - index1);
+            const intercept = parseFloat(point1) - slope * index1;
+
+            console.log('Slope and intercept:', slope, intercept);
+
+            // 使用整个数据范围来创建直线数据点
+            const lineData = allData.map((d, index) => ({
+                time: d.time,
+                value: slope * index + intercept
+            }));
+
+            console.log('Line data:', lineData);
+
+            // 设置直线数据
+            currentLineSeries.setData(lineData);
+
+            // 添加标记
+            currentMarkers = [
+                { time: date1, position: 'aboveBar', color: '#f68410', shape: 'circle', text: 'P1' },
+                { time: date2, position: 'aboveBar', color: '#f68410', shape: 'circle', text: 'P2' }
+            ];
+            currentSeries.setMarkers(currentMarkers);
+
         } else {
             console.log('No valid kline data found for:', currentCode);
-            // 如果没有有效的 kline 数据，移除现有的直线
+            // 如果没有有效的 kline 数据，移除现有的直线和标记
             if (currentLineSeries) {
                 chart.removeSeries(currentLineSeries);
                 currentLineSeries = null;
             }
+            if (currentMarkers) {
+                currentSeries.setMarkers([]);
+                currentMarkers = null;
+            }
         }
     } catch (error) {
         console.error('Error fetching or drawing kline data:', error);
-        // 发生错误时，也移除现有的直线
+        alert(`绘制 Kline 时发生错误: ${error.message}`);
+        // 发生错误时，也移除现有的直线和标记
         if (currentLineSeries) {
             chart.removeSeries(currentLineSeries);
             currentLineSeries = null;
+        }
+        if (currentMarkers) {
+            currentSeries.setMarkers([]);
+            currentMarkers = null;
         }
     }
 }

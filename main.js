@@ -30,7 +30,7 @@ server.get('/api/stock-data', async (req, res) => {
         symbol: symbol,
         scale: 240,
         ma: 5,
-        datalen: 30
+        datalen: 300
       }
     });
     res.json(response.data);
@@ -48,7 +48,7 @@ server.get('/api/fund-data', async (req, res) => {
     const response = await axios.get(url, {
       params: {
         pageIndex: 1,
-        pageSize: 200,
+        pageSize: 300,
         plat: 'Android',
         appType: 'ttjj',
         product: 'EFund',
@@ -197,8 +197,10 @@ ipcMain.handle('get-kline-data', async (event, id) => {
   return new Promise((resolve, reject) => {
     db.get("SELECT * FROM kline WHERE id = ?", [id], (err, row) => {
       if (err) {
+        console.error('Error fetching kline data:', err);
         reject(err);
       } else {
+        console.log('Fetched kline data:', row);
         resolve(row);
       }
     });
