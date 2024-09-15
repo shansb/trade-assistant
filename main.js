@@ -147,23 +147,17 @@ ipcMain.handle('delete-stock', (event, id) => {
 
 ipcMain.handle('get-kline-data', async (event, id) => {
   return new Promise((resolve, reject) => {
-    db.get("SELECT * FROM kline WHERE id = ?", [id], (err, row) => {
-      if (err) reject(err)
-      else resolve(row)
+    console.log('Fetching kline data for id:', id);
+    db.get("SELECT *, watch_type FROM kline WHERE id = ?", [id], (err, row) => {
+      if (err) {
+        console.error('Error fetching kline data:', err);
+        reject(err);
+      } else {
+        console.log('Kline data fetched:', row);
+        resolve(row);
+      }
     });
   });
 });
 
-ipcMain.handle('update-kline-data', async (event, data) => {
-  return new Promise((resolve, reject) => {
-    const { id, point1, date1, point2, date2 } = data;
-    db.run(
-      "UPDATE kline SET point1 = ?, date1 = ?, point2 = ?, date2 = ? WHERE id = ?",
-      [point1, date1, point2, date2, id],
-      function(err) {
-        if (err) reject(err)
-        else resolve(this.changes)
-      }
-    );
-  });
-});
+// 删除 'get-watch-type' 处理程序，因为我们不再需要它

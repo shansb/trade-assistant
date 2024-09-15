@@ -14,6 +14,7 @@ let isDrawingMode = false;
 let selectedPoints = [];
 let tempMarker = null;
 let confirmMarker = null;
+let currentWatchType = null;
 
 // 在文件顶部添加防抖函数
 function debounce(func, wait) {
@@ -69,8 +70,11 @@ document.addEventListener('DOMContentLoaded', () => {
     fetchList(false);
 
     // 修改下拉框变化事件监听器
-    selectElement.addEventListener('change', (event) => {
+    selectElement.addEventListener('change', async (event) => {
         currentCode = event.target.value;
+        const klineData = await window.api.getKlineData(currentCode);
+        currentWatchType = klineData ? klineData.watch_type : null;
+        updateDrawLineButtonState();
         updateChart();
     });
 
@@ -90,6 +94,10 @@ document.addEventListener('DOMContentLoaded', () => {
     chart.timeScale().subscribeVisibleTimeRangeChange(debouncedDrawKlineLine);
 
     drawLineBtn.addEventListener('click', () => {
+        if (currentWatchType !== 0 && currentWatchType !== 1) {
+            return; // 如果是只读模式，直接返回
+        }
+        
         isDrawingMode = !isDrawingMode;
         drawLineBtn.textContent = isDrawingMode ? '取消绘制' : '绘制直线';
         selectedPoints = [];
@@ -146,7 +154,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     chartContainer.addEventListener('click', (e) => {
-        if (!isDrawingMode) return;
+        if (!isDrawingMode || currentWatchType !== 0 && currentWatchType !== 1) return;
 
         const logical = chart.timeScale().coordinateToLogical(e.offsetX);
         const price = currentSeries.coordinateToPrice(e.offsetY);
@@ -231,8 +239,15 @@ async function updateChart() {
     await fetchData(currentSeries);
     console.log('Fetched data, now drawing kline');
     
+    // 获取 K 线数据和 watch_type
+    const klineData = await window.api.getKlineData(currentCode);
+    currentWatchType = klineData ? klineData.watch_type : null;
+    
+    // 更新绘制直线按钮的状态
+    updateDrawLineButtonState();
+    
     // 立即绘制 K 线
-    await drawKlineLine();
+    await drawKlineLine(klineData);
     
     // 恢复之前的可见范围
     if (currentVisibleRange) {
@@ -262,10 +277,14 @@ async function fetchData(candleSeries) {
     }
 }
 
-async function drawKlineLine() {
+async function drawKlineLine(klineData) {
+    console.log('drawKlineLine called with klineData:', klineData);
     try {
-        const klineData = await window.api.getKlineData(currentCode);
-        console.log('Kline data:', klineData);
+        if (!klineData) {
+            console.log('No klineData provided, fetching from API...');
+            klineData = await window.api.getKlineData(currentCode);
+        }
+        console.log('klineData after potential fetch:', klineData);
         if (klineData && klineData.point1 && klineData.date1 && klineData.point2 && klineData.date2) {
             const { point1, date1, point2, date2 } = klineData;
             
@@ -447,8 +466,12 @@ async function fetchList(isFund) {
             // 默认选中第一项
             selectElement.value = items[0].id;
             currentCode = items[0].id;
+            const klineData = await window.api.getKlineData(currentCode);
+            currentWatchType = klineData ? klineData.watch_type : null;
+            updateDrawLineButtonState();
+            
             if (chart) {
-                updateChart(); // 只有在 chart 已初始化时才调用 updateChart
+                updateChart();
             }
         } else {
             console.warn('No items found');
@@ -533,5 +556,16 @@ function formatDate(time) {
     } else {
         console.error('Invalid time format:', time);
         return 'Invalid Date';
+    }
+}
+
+function updateDrawLineButtonState() {
+    const drawLineBtn = document.getElementById('drawLineBtn');
+    if (currentWatchType === 0 || currentWatchType === 1) {
+        drawLineBtn.disabled = false;
+        drawLineBtn.textContent = '绘制直线';
+    } else {
+        drawLineBtn.disabled = true;
+        drawLineBtn.textContent = '只读模式';
     }
 }
