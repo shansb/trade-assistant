@@ -2,6 +2,7 @@ const { contextBridge, ipcRenderer } = require('electron')
 
 contextBridge.exposeInMainWorld('api', {
   getStocks: () => ipcRenderer.invoke('get-stocks'),
+  getFunds: () => ipcRenderer.invoke('get-funds'),
   addStock: (stock) => ipcRenderer.invoke('add-stock', stock),
   updateStock: (stock) => ipcRenderer.invoke('update-stock', stock),
   deleteStock: (id) => ipcRenderer.invoke('delete-stock', id),
@@ -16,5 +17,6 @@ contextBridge.exposeInMainWorld('api', {
     if (validChannels.includes(channel)) {
       ipcRenderer.on(channel, (event, ...args) => func(...args))
     }
-  }
+  },
+  getKlineData: (id) => ipcRenderer.invoke('get-kline-data', id),
 })

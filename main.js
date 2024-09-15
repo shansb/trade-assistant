@@ -40,6 +40,30 @@ server.get('/api/stock-data', async (req, res) => {
   }
 });
 
+// 修改基金数据请求路由
+server.get('/api/fund-data', async (req, res) => {
+  try {
+    const symbol = req.query.symbol || '270042';
+    const url = 'https://fundmobapi.eastmoney.com/FundMNewApi/FundMNHisNetList';
+    const response = await axios.get(url, {
+      params: {
+        pageIndex: 1,
+        pageSize: 200,
+        plat: 'Android',
+        appType: 'ttjj',
+        product: 'EFund',
+        Version: 1,
+        deviceid: '230874bd-c234-4e40-84f1-6a1a05fad7fb',
+        Fcode: symbol
+      }
+    });
+    res.json(response.data);
+  } catch (error) {
+    console.error('Error fetching fund data:', error)
+    res.status(500).json({ error: 'Failed to fetch fund data' })
+  }
+});
+
 // Start server
 server.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`)
@@ -103,10 +127,23 @@ app.on('quit', () => {
   })
 })
 
-// 添加 IPC 监听器来获取股票列表
+// 修改获取股票列表的 IPC 处理程序
 ipcMain.handle('get-stocks', async () => {
   return new Promise((resolve, reject) => {
     db.all("SELECT id, name FROM stocks ORDER BY name ASC", [], (err, rows) => {
+      if (err) {
+        reject(err)
+      } else {
+        resolve(rows)
+      }
+    })
+  })
+})
+
+// 添加获取基金列表的 IPC 处理程序
+ipcMain.handle('get-funds', async () => {
+  return new Promise((resolve, reject) => {
+    db.all("SELECT id, name FROM fund ORDER BY name ASC", [], (err, rows) => {
       if (err) {
         reject(err)
       } else {
@@ -154,3 +191,16 @@ ipcMain.handle('delete-stock', (event, id) => {
     })
   })
 })
+
+// 在现有的 IPC 处理程序后添加这个新的处理程序
+ipcMain.handle('get-kline-data', async (event, id) => {
+  return new Promise((resolve, reject) => {
+    db.get("SELECT * FROM kline WHERE id = ?", [id], (err, row) => {
+      if (err) {
+        reject(err);
+      } else {
+        resolve(row);
+      }
+    });
+  });
+});
