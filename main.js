@@ -206,3 +206,23 @@ ipcMain.handle('get-kline-data', async (event, id) => {
     });
   });
 });
+
+// 新增 IPC 处理程序
+ipcMain.handle('update-kline-data', async (event, data) => {
+  return new Promise((resolve, reject) => {
+    const { id, point1, date1, point2, date2 } = data;
+    db.run(
+      "UPDATE kline SET point1 = ?, date1 = ?, point2 = ?, date2 = ? WHERE id = ?",
+      [point1, date1, point2, date2, id],
+      function(err) {
+        if (err) {
+          console.error('Error updating kline data:', err);
+          reject(err);
+        } else {
+          console.log('Kline data updated successfully');
+          resolve(this.changes);
+        }
+      }
+    );
+  });
+});

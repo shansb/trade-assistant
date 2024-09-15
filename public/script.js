@@ -10,6 +10,8 @@ let isFundMode = false;
 let currentSeries = null; // 添加这行来跟踪当前的图表系列
 let currentLineSeries = null; // 添加这行来跟踪当前的直线系列
 let currentMarkers = null; // 添加这行来跟踪当前的标记
+let isDrawingMode = false;
+let selectedPoints = [];
 
 // 在文件顶部添加防抖函数
 function debounce(func, wait) {
@@ -29,6 +31,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const chartContainer = document.getElementById('chartContainer');
     const selectElement = document.getElementById('stockSelect');
     const toggleButton = document.getElementById('toggleButton');
+    const drawLineBtn = document.getElementById('drawLineBtn');
     
     if (!chartContainer) {
         console.error('Chart container not found');
@@ -83,6 +86,49 @@ document.addEventListener('DOMContentLoaded', () => {
     }, 300); // 300ms 的延迟
 
     chart.timeScale().subscribeVisibleTimeRangeChange(debouncedDrawKlineLine);
+
+    drawLineBtn.addEventListener('click', () => {
+        isDrawingMode = !isDrawingMode;
+        drawLineBtn.textContent = isDrawingMode ? '取消绘制' : '绘制直线';
+        selectedPoints = [];
+        
+        if (isDrawingMode) {
+            chart.applyOptions({
+                crosshair: {
+                    mode: LightweightCharts.CrosshairMode.Normal,
+                },
+            });
+        } else {
+            chart.applyOptions({
+                crosshair: {
+                    mode: LightweightCharts.CrosshairMode.Magnet,
+                },
+            });
+        }
+    });
+
+    chartContainer.addEventListener('click', (e) => {
+        if (!isDrawingMode) return;
+
+        const logical = chart.timeScale().coordinateToLogical(e.offsetX);
+        const price = currentSeries.coordinateToPrice(e.offsetY);
+        const time = chart.timeScale().coordinateToTime(e.offsetX);
+
+        if (logical !== null && time !== null) {
+            selectedPoints.push({ time, price });
+
+            if (selectedPoints.length === 2) {
+                updateKlineData(selectedPoints);
+                isDrawingMode = false;
+                drawLineBtn.textContent = '绘制直线';
+                chart.applyOptions({
+                    crosshair: {
+                        mode: LightweightCharts.CrosshairMode.Magnet,
+                    },
+                });
+            }
+        }
+    });
 });
 
 // 添加窗口大小变化时重新调整图表大小的功能
@@ -393,4 +439,37 @@ function formatFundData(data) {
 
 function convertToMilliseconds(dateString) {
     return new Date(dateString).getTime();
+}
+
+async function updateKlineData(points) {
+    try {
+        const [point1, point2] = points;
+        const klineData = {
+            id: currentCode,
+            point1: point1.price.toFixed(2),
+            date1: formatDate(point1.time),
+            point2: point2.price.toFixed(2),
+            date2: formatDate(point2.time)
+        };
+
+        console.log('Updating kline data:', klineData);  // 添加这行来记录数据
+
+        await window.api.updateKlineData(klineData);
+        drawKlineLine();
+    } catch (error) {
+        console.error('Error updating kline data:', error);
+        alert('更新 Kline 数据失败');
+    }
+}
+
+function formatDate(time) {
+    console.log('Formatting date:', time);  // 添加这行来记录输入
+    if (time instanceof Date) {
+        return `${time.getFullYear()}-${String(time.getMonth() + 1).padStart(2, '0')}-${String(time.getDate()).padStart(2, '0')}`;
+    } else if (typeof time === 'object' && 'year' in time && 'month' in time && 'day' in time) {
+        return `${time.year}-${String(time.month).padStart(2, '0')}-${String(time.day).padStart(2, '0')}`;
+    } else {
+        console.error('Invalid time format:', time);
+        return 'Invalid Date';
+    }
 }

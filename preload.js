@@ -19,4 +19,5 @@ contextBridge.exposeInMainWorld('api', {
     }
   },
   getKlineData: (id) => ipcRenderer.invoke('get-kline-data', id),
+  updateKlineData: (data) => ipcRenderer.invoke('update-kline-data', data),
 })
