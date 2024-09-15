@@ -12,6 +12,8 @@ let currentLineSeries = null; // 添加这行来跟踪当前的直线系列
 let currentMarkers = null; // 添加这行来跟踪当前的标记
 let isDrawingMode = false;
 let selectedPoints = [];
+let tempMarker = null;
+let confirmMarker = null;
 
 // 在文件顶部添加防抖函数
 function debounce(func, wait) {
@@ -93,17 +95,53 @@ document.addEventListener('DOMContentLoaded', () => {
         selectedPoints = [];
         
         if (isDrawingMode) {
+            // 隐藏老的直线
+            if (currentLineSeries) {
+                currentLineSeries.applyOptions({ visible: false });
+            }
             chart.applyOptions({
                 crosshair: {
                     mode: LightweightCharts.CrosshairMode.Normal,
                 },
             });
         } else {
+            // 显示老的直线
+            if (currentLineSeries) {
+                currentLineSeries.applyOptions({ visible: true });
+            }
             chart.applyOptions({
                 crosshair: {
                     mode: LightweightCharts.CrosshairMode.Magnet,
                 },
             });
+            // 清除所有标记
+            if (currentSeries) {
+                currentSeries.setMarkers([]);
+            }
+            tempMarker = null;
+            confirmMarker = null;
+        }
+    });
+
+    chartContainer.addEventListener('mousemove', (e) => {
+        if (!isDrawingMode || selectedPoints.length >= 2) return;
+
+        const logical = chart.timeScale().coordinateToLogical(e.offsetX);
+        const price = currentSeries.coordinateToPrice(e.offsetY);
+        const time = chart.timeScale().coordinateToTime(e.offsetX);
+
+        if (logical !== null && time !== null) {
+            // 更新临时标记
+            tempMarker = {
+                time: time,
+                position: 'inBar',
+                color: 'rgba(255, 0, 0, 0.5)',
+                shape: 'circle',
+                size: 1
+            };
+
+            // 使用 setMarkers 方法来更新标记
+            currentSeries.setMarkers([tempMarker, ...(confirmMarker ? [confirmMarker] : [])]);
         }
     });
 
@@ -117,6 +155,18 @@ document.addEventListener('DOMContentLoaded', () => {
         if (logical !== null && time !== null) {
             selectedPoints.push({ time, price });
 
+            // 更新确认标记
+            confirmMarker = {
+                time: time,
+                position: 'inBar',
+                color: 'rgba(255, 0, 0, 1)',
+                shape: 'circle',
+                size: 2
+            };
+
+            // 使用 setMarkers 方法来更新标记
+            currentSeries.setMarkers([confirmMarker]);
+
             if (selectedPoints.length === 2) {
                 updateKlineData(selectedPoints);
                 isDrawingMode = false;
@@ -126,6 +176,10 @@ document.addEventListener('DOMContentLoaded', () => {
                         mode: LightweightCharts.CrosshairMode.Magnet,
                     },
                 });
+                // 清除所有标记
+                currentSeries.setMarkers([]);
+                tempMarker = null;
+                confirmMarker = null;
             }
         }
     });
@@ -271,9 +325,17 @@ async function drawKlineLine() {
 
             // 添加标记
             currentMarkers = [
-                { time: date1, position: 'aboveBar', color: '#f68410', shape: 'circle', text: 'P1' },
-                { time: date2, position: 'aboveBar', color: '#f68410', shape: 'circle', text: 'P2' }
+                { time: date1, position: 'inBar', color: '#f68410', shape: 'circle', text: 'P1' },
+                { time: date2, position: 'inBar', color: '#f68410', shape: 'circle', text: 'P2' }
             ];
+            currentSeries.setMarkers(currentMarkers);
+
+            // 设置标记的 y 坐标为直线上的点
+            const marker1 = currentMarkers[0];
+            const marker2 = currentMarkers[1];
+            marker1.y = parseFloat(point1);
+            marker2.y = parseFloat(point2);
+
             currentSeries.setMarkers(currentMarkers);
 
         } else {
