@@ -60,12 +60,15 @@ server.get('/api/fund-data', async (req, res) => {
 });
 
 // Start server
-server.listen(PORT)
+const expressServer = server.listen(PORT, () => {
+  console.log(`Express server running on http://localhost:${PORT}`)
+})
 
 function createWindow () {
   const win = new BrowserWindow({
-    width: 800,
-    height: 600,
+    width: 1024,
+    height: 768,
+    icon: path.join(__dirname, 'assets/icon.png'), // 设置应用图标
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
@@ -73,22 +76,31 @@ function createWindow () {
     }
   })
 
+  // 最大化窗口
+  win.maximize();
+
+  // 修改这里：使用 loadURL 而不是 loadFile
   win.loadURL(`http://localhost:${PORT}`)
   win.webContents.openDevTools()
 }
 
 if (app) {
-  app.whenReady().then(createWindow)
+  app.whenReady().then(() => {
+    createWindow()
 
-  app.on('activate', () => {
-    if (BrowserWindow.getAllWindows().length === 0) {
-      createWindow()
-    }
+    app.on('activate', () => {
+      if (BrowserWindow.getAllWindows().length === 0) {
+        createWindow()
+      }
+    })
   })
 
   app.on('window-all-closed', () => {
     if (process.platform !== 'darwin') {
-      app.quit()
+      expressServer.close(() => {
+        console.log('Express server closed')
+        app.quit()
+      })
     }
   })
 } else {
@@ -147,17 +159,34 @@ ipcMain.handle('delete-stock', (event, id) => {
 
 ipcMain.handle('get-kline-data', async (event, id) => {
   return new Promise((resolve, reject) => {
-    console.log('Fetching kline data for id:', id);
+    // console.log('Fetching kline data for id:', id);
     db.get("SELECT *, watch_type FROM kline WHERE id = ?", [id], (err, row) => {
       if (err) {
         console.error('Error fetching kline data:', err);
         reject(err);
       } else {
-        console.log('Kline data fetched:', row);
+        // console.log('Kline data fetched:', row);
         resolve(row);
       }
     });
   });
 });
 
-// 删除 'get-watch-type' 处理程序，因为我们不再需要它
+ipcMain.handle('update-kline-data', async (event, klineData) => {
+  return new Promise((resolve, reject) => {
+    const { id, point1, date1, point2, date2 } = klineData;
+    db.run(
+      "UPDATE kline SET point1 = ?, date1 = ?, point2 = ?, date2 = ? WHERE id = ?",
+      [point1, date1, point2, date2, id],
+      function(err) {
+        if (err) {
+          console.error('Error updating kline data:', err);
+          reject(err);
+        } else {
+          console.log('Kline data updated successfully');
+          resolve(this.changes);
+        }
+      }
+    );
+  });
+});

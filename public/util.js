@@ -117,7 +117,7 @@ async function fetchStockList(selectElement) {
         stocks.forEach(stock => {
             const option = document.createElement('option');
             option.value = stock.id;
-            option.textContent = `${stock.name} - ${stock.id}`;
+            option.textContent = `${stock.name}（ ${stock.id}）`;
             selectElement.appendChild(option);
         });
     } catch (error) {
@@ -127,14 +127,14 @@ async function fetchStockList(selectElement) {
 
 async function fetchList(isFund) {
     const selectElement = document.getElementById('stockSelect');
-    selectElement.innerHTML = '<option value="">Select a stock/fund</option>';
+    selectElement.innerHTML = '';
     try {
         const items = isFund ? await window.api.getFunds() : await window.api.getStocks();
         if (Array.isArray(items) && items.length > 0) {
             items.forEach(item => {
                 const option = document.createElement('option');
                 option.value = item.id;
-                option.textContent = `${item.name} - ${item.id}`;
+                option.textContent = `${item.name}（${item.id}）`;
                 selectElement.appendChild(option);
             });
             // 默认选中第一项
@@ -169,12 +169,13 @@ async function updateKlineData(points) {
             date2: formatDate(point2.time)
         };
 
-        console.log('Updating kline data:', klineData);  // 添加这行来记录数据
+        console.log('Updating kline data:', klineData);
 
-        await window.api.updateKlineData(klineData);
-        drawKlineLine();
+        const result = await window.api.updateKlineData(klineData);
+        console.log('Kline data update result:', result);
+        await drawKlineLine();
     } catch (error) {
         console.error('Error updating kline data:', error);
-        alert('更新 Kline 数据失败');
+        alert('更新 Kline 数据失败: ' + error.message);
     }
 }

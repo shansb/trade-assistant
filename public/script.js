@@ -251,7 +251,7 @@ async function fetchData(candleSeries) {
         } else {
             data = await fetchStockData(currentCode);
         }
-        console.log('Raw data:', data);
+        // console.log('Raw data:', data);
         if (!data || data.length === 0) {
             console.error('No data received');
             return;
@@ -266,13 +266,13 @@ async function fetchData(candleSeries) {
 }
 
 async function drawKlineLine(klineData) {
-    console.log('drawKlineLine called with klineData:', klineData);
+    // console.log('drawKlineLine called with klineData:', klineData);
     try {
         if (!klineData) {
             console.log('No klineData provided, fetching from API...');
             klineData = await window.api.getKlineData(currentCode);
         }
-        console.log('klineData after potential fetch:', klineData);
+        // console.log('klineData after potential fetch:', klineData);
         if (klineData && klineData.point1 && klineData.date1 && klineData.point2 && klineData.date2) {
             const { point1, date1, point2, date2 } = klineData;
             
@@ -325,7 +325,7 @@ async function drawKlineLine(klineData) {
                 value: slope * index + intercept
             }));
 
-            console.log('Line data:', lineData);
+            // console.log('Line data:', lineData);
 
             // 设置直线数据
             currentLineSeries.setData(lineData);

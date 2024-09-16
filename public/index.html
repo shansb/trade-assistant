@@ -1,22 +1,25 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Stock/Fund Chart</title>
+    <title>Trade Helper</title>
     <script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <style>
         body {
             margin: 0;
             padding: 0;
-            font-family: Arial, sans-serif;
+            font-family: 'Roboto', Arial, sans-serif;
+            background-color: #f5f5f5;
         }
         .container {
             display: flex;
             height: 100vh;
         }
         .sidebar {
-            width: 200px;
+            width: 250px;
             padding: 20px;
-            background-color: #f0f0f0;
+            background-color: #ffffff;
+            box-shadow: 2px 0 5px rgba(0,0,0,0.1);
             display: flex;
             flex-direction: column;
         }
@@ -24,17 +27,48 @@
             flex-grow: 1;
             display: flex;
             flex-direction: column;
+            padding: 20px;
         }
         #chartContainer {
             flex-grow: 1;
+            background-color: #ffffff;
+            border-radius: 4px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
         }
         #stockSelect {
             height: 80vh;
             overflow-y: auto;
-            margin-bottom: 10px;
+            margin-bottom: 20px;
+            border: none;
+            background-color: #f5f5f5;
+            border-radius: 4px;
+            padding: 10px;
+            font-size: 14px;
         }
         button {
             margin-bottom: 10px;
+            background-color: #87CEFA; /* 淡蓝色 */
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #1E90FF; /* 深一点的蓝色 */
+        }
+        button .material-icons {
+            margin-right: 8px;
+        }
+        h1 {
+            color: #FF6347; /* 淡红色 */
+            margin-top: 0;
+            font-size: 24px;
+            padding: 10px 0;
         }
     </style>
 </head>
@@ -42,13 +76,18 @@
     <div class="container">
         <div class="sidebar">
             <select id="stockSelect" size="20">
-                <option value="">Select a stock/fund</option>
             </select>
-            <button id="toggleButton">股票/基金</button>
-            <button id="drawLineBtn">绘制直线</button>
+            <button id="toggleButton">
+                <i class="material-icons">swap_horiz</i>
+                股票/基金
+            </button>
+            <button id="drawLineBtn">
+                <i class="material-icons">timeline</i>
+                绘制直线
+            </button>
         </div>
         <div class="main-content">
-            <h1>Stock/Fund Chart</h1>
+            <!-- <h1 id="chartTitle">Trade Helper</h1> -->
             <div id="chartContainer"></div>
         </div>
     </div>
