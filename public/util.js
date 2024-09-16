@@ -110,3 +110,71 @@ function convertToTimestamp(dateInput) {
         return null;
     }
 }
+
+async function fetchStockList(selectElement) {
+    try {
+        const stocks = await window.api.getStocks();
+        stocks.forEach(stock => {
+            const option = document.createElement('option');
+            option.value = stock.id;
+            option.textContent = `${stock.name} - ${stock.id}`;
+            selectElement.appendChild(option);
+        });
+    } catch (error) {
+        console.error('Error fetching stock list:', error);
+    }
+}
+
+async function fetchList(isFund) {
+    const selectElement = document.getElementById('stockSelect');
+    selectElement.innerHTML = '<option value="">Select a stock/fund</option>';
+    try {
+        const items = isFund ? await window.api.getFunds() : await window.api.getStocks();
+        if (Array.isArray(items) && items.length > 0) {
+            items.forEach(item => {
+                const option = document.createElement('option');
+                option.value = item.id;
+                option.textContent = `${item.name} - ${item.id}`;
+                selectElement.appendChild(option);
+            });
+            // 默认选中第一项
+            selectElement.value = items[0].id;
+            currentCode = items[0].id;
+            const klineData = await window.api.getKlineData(currentCode);
+            currentWatchType = klineData ? klineData.watch_type : null;
+            updateDrawLineButtonState();
+            
+            if (chart) {
+                updateChart();
+            }
+        } else {
+            console.warn('No items found');
+        }
+    } catch (error) {
+        console.error(`Error fetching ${isFund ? 'fund' : 'stock'} list:`, error);
+    }
+}
+
+
+
+
+async function updateKlineData(points) {
+    try {
+        const [point1, point2] = points;
+        const klineData = {
+            id: currentCode,
+            point1: point1.price.toFixed(2),
+            date1: formatDate(point1.time),
+            point2: point2.price.toFixed(2),
+            date2: formatDate(point2.time)
+        };
+
+        console.log('Updating kline data:', klineData);  // 添加这行来记录数据
+
+        await window.api.updateKlineData(klineData);
+        drawKlineLine();
+    } catch (error) {
+        console.error('Error updating kline data:', error);
+        alert('更新 Kline 数据失败');
+    }
+}
