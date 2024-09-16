@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain } = require('electron')
+const { app, BrowserWindow, ipcMain, dialog } = require('electron')
 const path = require('path')
 const express = require('express')
 const cors = require('cors')
@@ -8,12 +8,7 @@ const sqlite3 = require('sqlite3').verbose()
 const server = express()
 const PORT = 3000
 
-// 连接到数据库
-const db = new sqlite3.Database('./kLine.db', (err) => {
-  if (err) {
-    console.error('Error connecting to the database:', err)
-  }
-})
+let db = null;
 
 // Middleware
 server.use(cors())
@@ -73,15 +68,42 @@ function createWindow () {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
       nodeIntegration: false
-    }
+    },
+    show: false // 先不显示窗口
   })
 
   // 最大化窗口
   win.maximize();
 
-  // 修改这里：使用 loadURL 而不是 loadFile
-  win.loadURL(`http://localhost:${PORT}`)
-  win.webContents.openDevTools()
+  // 选择数据库文件
+  dialog.showOpenDialog(win, {
+    properties: ['openFile'],
+    filters: [
+      { name: 'SQLite Database', extensions: ['db', 'sqlite', 'sqlite3'] }
+    ]
+  }).then(result => {
+    if (!result.canceled && result.filePaths.length > 0) {
+      const dbPath = result.filePaths[0];
+      // 连接到数据库
+      db = new sqlite3.Database(dbPath, (err) => {
+        if (err) {
+          console.error('Error connecting to the database:', err)
+          app.quit()
+        } else {
+          console.log('Connected to the database')
+          // 加载页面
+          win.loadURL(`http://localhost:${PORT}`)
+          win.show() // 显示窗口
+          win.webContents.openDevTools()
+        }
+      })
+    } else {
+      app.quit() // 如果用户取消选择，退出应用
+    }
+  }).catch(err => {
+    console.error('Error selecting database file:', err)
+    app.quit()
+  })
 }
 
 if (app) {
@@ -99,17 +121,20 @@ if (app) {
     if (process.platform !== 'darwin') {
       expressServer.close(() => {
         console.log('Express server closed')
-        app.quit()
+        if (db) {
+          db.close(() => {
+            console.log('Database connection closed')
+            app.quit()
+          })
+        } else {
+          app.quit()
+        }
       })
     }
   })
 } else {
   console.error('Electron app object is not available')
 }
-
-app.on('quit', () => {
-  db.close()
-})
 
 // IPC handlers
 ipcMain.handle('get-stocks', () => {
@@ -159,13 +184,11 @@ ipcMain.handle('delete-stock', (event, id) => {
 
 ipcMain.handle('get-kline-data', async (event, id) => {
   return new Promise((resolve, reject) => {
-    // console.log('Fetching kline data for id:', id);
     db.get("SELECT *, watch_type FROM kline WHERE id = ?", [id], (err, row) => {
       if (err) {
         console.error('Error fetching kline data:', err);
         reject(err);
       } else {
-        // console.log('Kline data fetched:', row);
         resolve(row);
       }
     });
