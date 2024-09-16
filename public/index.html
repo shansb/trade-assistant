@@ -28,7 +28,12 @@
         #chartContainer {
             flex-grow: 1;
         }
-        select, button {
+        #stockSelect {
+            height: 80vh;
+            overflow-y: auto;
+            margin-bottom: 10px;
+        }
+        button {
             margin-bottom: 10px;
         }
     </style>
@@ -36,7 +41,7 @@
 <body>
     <div class="container">
         <div class="sidebar">
-            <select id="stockSelect">
+            <select id="stockSelect" size="20">
                 <option value="">Select a stock/fund</option>
             </select>
             <button id="toggleButton">股票/基金</button>
