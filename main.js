@@ -195,12 +195,20 @@ ipcMain.handle('get-kline-data', async (event, id) => {
   });
 });
 
+function formatDateWithTime(dateString) {
+  const date = new Date(dateString);
+  return date.toISOString().slice(0, 19).replace('T', ' ');
+}
+
 ipcMain.handle('update-kline-data', async (event, klineData) => {
   return new Promise((resolve, reject) => {
     const { id, point1, date1, point2, date2 } = klineData;
+    const formattedDate1 = formatDateWithTime(date1);
+    const formattedDate2 = formatDateWithTime(date2);
+    
     db.run(
       "UPDATE kline SET point1 = ?, date1 = ?, point2 = ?, date2 = ? WHERE id = ?",
-      [point1, date1, point2, date2, id],
+      [point1, formattedDate1, point2, formattedDate2, id],
       function(err) {
         if (err) {
           console.error('Error updating kline data:', err);
