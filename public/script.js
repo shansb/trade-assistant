@@ -1,5 +1,4 @@
 console.log('Script started');
-
 window.onerror = function(message, source, lineno, colno, error) {
     console.error('Global error:', message, 'at', source, lineno, colno, error);
 };
@@ -72,7 +71,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const response = await fetch(`/api/kline/${currentCode}`);
         const klineData = await response.json();
         currentWatchType = klineData ? klineData.watch_type : null;
-        updateDrawLineButtonState();
+        updateWatchModeButtons(); // 添加这行
         updateChart();
     });
 
@@ -244,8 +243,8 @@ async function updateChart() {
     const klineData = await response.json();
     currentWatchType = klineData ? klineData.watch_type : null;
     
-    // 更新绘制直线按钮的状态
-    updateDrawLineButtonState();
+    // 更新观察模式按钮的状态
+    updateWatchModeButtons(); // 添加这行
     
     // 立即绘制 K 线
     await drawKlineLine(klineData);

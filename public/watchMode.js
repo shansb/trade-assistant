@@ -8,7 +8,7 @@ function initWatchModeButtons() {
     toggleReadOnlyBtn.addEventListener('click', toggleReadOnly);
     toggleTrackingBtn.addEventListener('click', toggleTracking);
 
-    updateButtonVisibility();
+    updateWatchModeButtons();
 }
 
 async function toggleReadOnly() {
@@ -23,7 +23,7 @@ async function toggleReadOnly() {
         const result = await response.json();
         if (result.success) {
             currentWatchType = -1;
-            updateButtonVisibility();
+            updateWatchModeButtons();
         } else {
             console.error('Failed to update watch type');
         }
@@ -44,7 +44,7 @@ async function toggleTracking() {
         const result = await response.json();
         if (result.success) {
             currentWatchType = 0;
-            updateButtonVisibility();
+            updateWatchModeButtons();
         } else {
             console.error('Failed to update watch type');
         }
@@ -53,27 +53,22 @@ async function toggleTracking() {
     }
 }
 
-function updateButtonVisibility() {
+function updateWatchModeButtons() {
     if (currentWatchType === -1) {
         drawLineBtn.style.display = 'none';
         toggleReadOnlyBtn.style.display = 'none';
         toggleTrackingBtn.style.display = 'flex';
+        drawLineBtn.disabled = true;
+        drawLineBtn.textContent = '只读模式';
     } else {
         drawLineBtn.style.display = 'flex';
         toggleReadOnlyBtn.style.display = 'flex';
         toggleTrackingBtn.style.display = 'none';
-    }
-}
-
-function updateDrawLineButtonState() {
-    if (currentWatchType === 0 || currentWatchType === 1) {
         drawLineBtn.disabled = false;
         drawLineBtn.textContent = '绘制直线';
-        drawLineBtn.style.opacity = '1';
-    } else {
-        drawLineBtn.disabled = true;
-        drawLineBtn.textContent = '只读模式';
-        drawLineBtn.style.opacity = '0.5';
     }
-    updateButtonVisibility();
+    drawLineBtn.style.opacity = currentWatchType === -1 ? '0.5' : '1';
 }
+
+// 导出函数以便在其他文件中使用
+window.updateWatchModeButtons = updateWatchModeButtons;
