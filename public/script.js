@@ -180,6 +180,8 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
     });
+
+    initWatchModeButtons();
 });
 
 // 添加窗口大小变化时重新调整图表大小的功能

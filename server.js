@@ -143,6 +143,24 @@ app.put('/api/kline/:id', (req, res) => {
     );
 });
 
+// 添加这个新路由
+app.put('/api/kline/:id/watch-type', (req, res) => {
+    const { id } = req.params;
+    const { watchType } = req.body;
+    
+    db.run(
+        "UPDATE kline SET watch_type = ? WHERE id = ?",
+        [watchType, id],
+        function(err) {
+            if (err) {
+                res.status(500).json({ error: err.message, success: false });
+                return;
+            }
+            res.json({ changes: this.changes, success: true });
+        }
+    );
+});
+
 // Start server
 app.listen(PORT, () => {
     console.log(`Express server running on http://localhost:${PORT}`)
