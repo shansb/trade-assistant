@@ -75,34 +75,21 @@ function createWindow () {
   // 最大化窗口
   win.maximize();
 
-  // 选择数据库文件
-  dialog.showOpenDialog(win, {
-    properties: ['openFile'],
-    filters: [
-      { name: 'SQLite Database', extensions: ['db', 'sqlite', 'sqlite3'] }
-    ]
-  }).then(result => {
-    if (!result.canceled && result.filePaths.length > 0) {
-      const dbPath = result.filePaths[0];
-      // 连接到数据库
-      db = new sqlite3.Database(dbPath, (err) => {
-        if (err) {
-          console.error('Error connecting to the database:', err)
-          app.quit()
-        } else {
-          console.log('Connected to the database')
-          // 加载页面
-          win.loadURL(`http://localhost:${PORT}`)
-          win.show() // 显示窗口
-          win.webContents.openDevTools()
-        }
-      })
+  // 使用固定的数据库路径
+  const dbPath = path.join(__dirname, 'kLine.db');
+  
+  // 连接到数据库
+  db = new sqlite3.Database(dbPath, (err) => {
+    if (err) {
+      console.error('Error connecting to the database:', err)
+      app.quit()
     } else {
-      app.quit() // 如果用户取消选择，退出应用
+      console.log('Connected to the database')
+      // 加载页面
+      win.loadURL(`http://localhost:${PORT}`)
+      win.show() // 显示窗口
+      win.webContents.openDevTools()
     }
-  }).catch(err => {
-    console.error('Error selecting database file:', err)
-    app.quit()
   })
 }
 
