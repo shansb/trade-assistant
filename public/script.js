@@ -33,8 +33,8 @@ document.addEventListener('DOMContentLoaded', () => {
         width: chartContainer.clientWidth,
         height: chartContainer.clientHeight,
         layout: {
-            background: { color: '#ffffff' },
-            textColor: '#333',
+            background: { type: 'solid', color: '#ffffff' },
+            textColor: '#333333',
         },
         grid: {
             vertLines: { color: '#e0e0e0' },
@@ -42,13 +42,22 @@ document.addEventListener('DOMContentLoaded', () => {
         },
         crosshair: {
             mode: LightweightCharts.CrosshairMode.Normal,
+            vertLine: {
+                width: 1,
+                color: 'rgba(224, 227, 235, 0.8)',
+                style: 0,
+            },
+            horzLine: {
+                width: 1,
+                color: 'rgba(224, 227, 235, 0.8)',
+                style: 0,
+            },
         },
         rightPriceScale: {
-            borderColor: '#dfdfdf',
-            visible: true,
+            borderColor: '#e0e0e0',
         },
         timeScale: {
-            borderColor: '#dfdfdf',
+            borderColor: '#e0e0e0',
             timeVisible: true,
             secondsVisible: false,
         },
@@ -216,12 +225,12 @@ async function updateChart() {
 
     // 创建新的蜡烛图系列
     currentSeries = chart.addCandlestickSeries({
-        upColor: '#ef5350',
-        downColor: '#26a69a',
-        borderUpColor: '#ef5350',
-        borderDownColor: '#26a69a',
-        wickUpColor: '#ef5350',
-        wickDownColor: '#26a69a',
+        upColor: '#26a69a',
+        downColor: '#ef5350',
+        borderUpColor: '#26a69a',
+        borderDownColor: '#ef5350',
+        wickUpColor: '#26a69a',
+        wickDownColor: '#ef5350',
     });
 
     // 重置 currentLineSeries
@@ -313,9 +322,13 @@ async function drawKlineLine(klineData) {
 
             // 创建新的线系列
             currentLineSeries = chart.addLineSeries({
-                color: 'rgba(255, 0, 0, 0.8)',
+                color: 'rgba(33, 150, 243, 0.8)',
                 lineWidth: 2,
                 lineStyle: LightweightCharts.LineStyle.Solid,
+                crosshairMarkerVisible: true,
+                crosshairMarkerRadius: 4,
+                crosshairMarkerBorderColor: 'rgb(33, 150, 243)',
+                crosshairMarkerBackgroundColor: 'rgb(255, 255, 255)',
             });
 
             // 计算直线斜率和截距
@@ -403,5 +416,3 @@ async function fetchFundData(symbol) {
     }
     return formatFundData(data.Datas);
 }
-
-

@@ -57,10 +57,10 @@ function updateButtonVisibility() {
     if (currentWatchType === -1) {
         drawLineBtn.style.display = 'none';
         toggleReadOnlyBtn.style.display = 'none';
-        toggleTrackingBtn.style.display = 'block';
+        toggleTrackingBtn.style.display = 'flex';
     } else {
-        drawLineBtn.style.display = 'block';
-        toggleReadOnlyBtn.style.display = 'block';
+        drawLineBtn.style.display = 'flex';
+        toggleReadOnlyBtn.style.display = 'flex';
         toggleTrackingBtn.style.display = 'none';
     }
 }
@@ -69,9 +69,11 @@ function updateDrawLineButtonState() {
     if (currentWatchType === 0 || currentWatchType === 1) {
         drawLineBtn.disabled = false;
         drawLineBtn.textContent = '绘制直线';
+        drawLineBtn.style.opacity = '1';
     } else {
         drawLineBtn.disabled = true;
         drawLineBtn.textContent = '只读模式';
+        drawLineBtn.style.opacity = '0.5';
     }
     updateButtonVisibility();
 }
