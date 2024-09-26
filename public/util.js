@@ -113,7 +113,8 @@ function convertToTimestamp(dateInput) {
 
 async function fetchStockList(selectElement) {
     try {
-        const stocks = await window.api.getStocks();
+        const response = await fetch('/api/stocks');
+        const stocks = await response.json();
         stocks.forEach(stock => {
             const option = document.createElement('option');
             option.value = stock.id;
@@ -129,7 +130,8 @@ async function fetchList(isFund) {
     const selectElement = document.getElementById('stockSelect');
     selectElement.innerHTML = '';
     try {
-        const items = isFund ? await window.api.getFunds() : await window.api.getStocks();
+        const response = await fetch(isFund ? '/api/funds' : '/api/stocks');
+        const items = await response.json();
         if (Array.isArray(items) && items.length > 0) {
             items.forEach(item => {
                 const option = document.createElement('option');
@@ -140,7 +142,8 @@ async function fetchList(isFund) {
             // 默认选中第一项
             selectElement.value = items[0].id;
             currentCode = items[0].id;
-            const klineData = await window.api.getKlineData(currentCode);
+            const klineResponse = await fetch(`/api/kline/${currentCode}`);
+            const klineData = await klineResponse.json();
             currentWatchType = klineData ? klineData.watch_type : null;
             updateDrawLineButtonState();
             
@@ -171,7 +174,14 @@ async function updateKlineData(points) {
 
         console.log('Updating kline data:', klineData);
 
-        const result = await window.api.updateKlineData(klineData);
+        const response = await fetch(`/api/kline/${currentCode}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(klineData),
+        });
+        const result = await response.json();
         console.log('Kline data update result:', result);
         await drawKlineLine();
     } catch (error) {

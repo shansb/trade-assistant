@@ -60,7 +60,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // 修改下拉框变化事件监听器
     selectElement.addEventListener('change', async (event) => {
         currentCode = event.target.value;
-        const klineData = await window.api.getKlineData(currentCode);
+        const response = await fetch(`/api/kline/${currentCode}`);
+        const klineData = await response.json();
         currentWatchType = klineData ? klineData.watch_type : null;
         updateDrawLineButtonState();
         updateChart();
@@ -228,7 +229,8 @@ async function updateChart() {
     console.log('Fetched data, now drawing kline');
     
     // 获取 K 线数据和 watch_type
-    const klineData = await window.api.getKlineData(currentCode);
+    const response = await fetch(`/api/kline/${currentCode}`);
+    const klineData = await response.json();
     currentWatchType = klineData ? klineData.watch_type : null;
     
     // 更新绘制直线按钮的状态
@@ -270,7 +272,8 @@ async function drawKlineLine(klineData) {
     try {
         if (!klineData) {
             console.log('No klineData provided, fetching from API...');
-            klineData = await window.api.getKlineData(currentCode);
+            const response = await fetch(`/api/kline/${currentCode}`);
+            klineData = await response.json();
         }
         // console.log('klineData after potential fetch:', klineData);
         if (klineData && klineData.point1 && klineData.date1 && klineData.point2 && klineData.date2) {
@@ -375,7 +378,7 @@ async function drawKlineLine(klineData) {
 
 
 async function fetchStockData(symbol) {
-    const response = await fetch(`http://localhost:3000/api/stock-data?symbol=${symbol}`);
+    const response = await fetch(`/api/stock-data?symbol=${symbol}`);
     if (!response.ok) {
         throw new Error('Network response was not ok');
     }
@@ -387,8 +390,7 @@ async function fetchStockData(symbol) {
 }
 
 async function fetchFundData(symbol) {
-    const url = 'http://localhost:3000/api/fund-data';
-    const response = await fetch(`${url}?symbol=${symbol}`);
+    const response = await fetch(`/api/fund-data?symbol=${symbol}`);
     if (!response.ok) {
         throw new Error('Network response was not ok');
     }
