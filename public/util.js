@@ -183,9 +183,10 @@ async function updateKlineData(points) {
         });
         const result = await response.json();
         console.log('Kline data update result:', result);
+        showToast('Kline 数据更新成功', 'success');
         await drawKlineLine();
     } catch (error) {
         console.error('Error updating kline data:', error);
-        alert('更新 Kline 数据失败: ' + error.message);
+        showToast(`更新 Kline 数据失败: ${error.message}`, 'error');
     }
 }

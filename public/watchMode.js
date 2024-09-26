@@ -70,5 +70,4 @@ function updateWatchModeButtons() {
     drawLineBtn.style.opacity = currentWatchType === -1 ? '0.5' : '1';
 }
 
-// 导出函数以便在其他文件中使用
 window.updateWatchModeButtons = updateWatchModeButtons;
