@@ -1,5 +1,5 @@
 # trade-assistant
-一款跨设备的**中国股票及基金**的K线绘制工具，本版本为electron应用，可以在浏览器上打开。*server版本请切换到server分支*
+一款跨设备的**中国股票及基金**的K线绘制工具，本版本为electron应用，我尝试打包应用但是失败了，所以没有release。*server版本请切换到server分支*
 
 因为Linux的同花顺软件不能画线所以做了这个，还是比较粗糙，但是够用。
 
