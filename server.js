@@ -5,7 +5,7 @@ const axios = require('axios');
 const sqlite3 = require('sqlite3').verbose();
 
 const app = express();
-const PORT = 3000;
+const PORT = 6000;
 
 let db = null;
 
@@ -130,9 +130,12 @@ app.get('/api/kline/:id', (req, res) => {
 
 app.put('/api/kline/:id', (req, res) => {
     const { point1, date1, point2, date2 } = req.body;
+    const formattedDate1 = new Date(date1).toISOString().replace('T', ' ').substring(0, 19);
+    const formattedDate2 = new Date(date2).toISOString().replace('T', ' ').substring(0, 19);
+    const watchType = point1 > point2 ? 1 : 0;
     db.run(
-        "UPDATE kline SET point1 = ?, date1 = ?, point2 = ?, date2 = ? WHERE id = ?",
-        [point1, date1, point2, date2, req.params.id],
+        "UPDATE kline SET point1 = ?, date1 = ?, point2 = ?, date2 = ?, rate = 0, watch_type = ? WHERE id = ?",
+        [point1, formattedDate1, point2, formattedDate2, watchType, req.params.id],
         function(err) {
             if (err) {
                 res.status(500).json({ error: err.message });
