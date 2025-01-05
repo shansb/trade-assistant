@@ -97,7 +97,7 @@ document.addEventListener('DOMContentLoaded', () => {
         drawKlineLine();
     }, 300);
 
-    chart.timeScale().subscribeVisibleTimeRangeChange(debouncedDrawKlineLine);
+    // chart.timeScale().subscribeVisibleTimeRangeChange(debouncedDrawKlineLine);
 
     drawLineBtn.addEventListener('click', () => {
         if (currentWatchType !== 0 && currentWatchType !== 1) {
